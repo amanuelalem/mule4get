@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d21ed236-930b-4d28-b14d-201cce230ad3" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="80122a6a-ff6e-4148-9941-99a58cc291d9" >
+		<db:my-sql-connection host="db.icraftsoft.net" port="3306" user="mulesoftuser" password="Cr@fTMule$oFt" database="mulesoftdb" />
+	</db:config>
+	<flow name="assignmentFlow" doc:id="440f12cb-468c-4939-979b-1c8b5fd67465" >
+		<http:listener doc:name="Listener" doc:id="9b1a32cd-a873-4751-b4fb-b7c227828dd1" config-ref="HTTP_Listener_config" path="/db"/>
+		<db:select doc:name="Select" doc:id="49027be7-e080-42bf-8963-8c824eae5051" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from tb_product]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="564d9b13-db95-4bfd-b3da-b4ce1cce49c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter($.price >5000)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="de671b3a-0133-4c0f-833f-b28dc5f6193a" message="#[payload]"/>
+	</flow>
+	<flow name="get:\users" doc:id="198b9467-bf9b-481d-aca3-70225e1a1418" >
+		<http:listener doc:name="Listener" doc:id="7b8ff99e-7999-43dc-b967-e563d8135472" config-ref="HTTP_Listener_config" path="/user"/>
+		<db:select doc:name="Select" doc:id="4e4f287e-74ee-4db1-a2c0-3ac5b58e9673" config-ref="Database_Config">
+			<db:sql ><![CDATA[select *from user;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="864cee6b-4cfa-4607-9544-a2e481b395fd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get:\products\(product_ID):craft-online-shopping-config" doc:id="cda2b001-a11a-43c3-b2c0-206eb852c995" >
+		<http:listener doc:name="Listener" doc:id="383c3418-c6fe-4a4f-b905-04d5a6659123" config-ref="HTTP_Listener_config" path="/products"/>
+		<db:select doc:name="Select" doc:id="1e30ee50-0e5b-47d4-886f-8e192696fa14" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from tb_product;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="01488cfa-fb4c-4537-ba87-e082e5639e54">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="q3" doc:id="b21653a4-61b8-4d14-a0d9-5baaa8a62719" >
+		<http:listener doc:name="Listener" doc:id="509041b5-7ba3-4ca2-b235-c11a4efa1f4b" config-ref="HTTP_Listener_config" path="/order"/>
+		<db:select doc:name="Select" doc:id="a1ff389b-1b62-436f-afb4-19d2d2aee491" config-ref="Database_Config">
+			<db:sql ><![CDATA[select *from orders]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="847503ab-f6ee-4f00-82a3-c6a85ffd5e03" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+output application/json
+---
+(payload orderBy $.amount>5000) ++ (payload orderBy $.amount<5000) ++(payload orderBy $.status) ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
